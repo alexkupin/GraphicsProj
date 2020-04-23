@@ -26,13 +26,13 @@ function initGL(){
 	myShaderProgram = initShaders( gl, "vertex-shader", "fragment-shader" );
 	gl.useProgram( myShaderProgram );
 	
-	numVertices = 48163; //really 48163
-	numTriangles = 16054; //really 16054?
+	numVertices = 7452; //really 48163
+	numTriangles = 2484; //really 16054?
 	//numVerticesPB = 9456;
 	//numTrianglesPB = 3152;
 	vertices = [];
-	vertices = getMGRVertices();
-	indexList = getMGRFaces();
+	vertices = getVerticies();
+	indexList = getFaces();
 	//verticesPB = getPBVertices();
 	//indexListPB = getPBFaces();
 	
@@ -66,7 +66,7 @@ function initGL(){
 	//set up uniforms for viewing
 	
 	//modelview matrix
-	var e = vec3(50.0, 20.0, -80.0); //eye
+	var e = vec3(50.0, 20.0, 30.0); //eye
 	var a = vec3(0.0, 0.0, 0.0); // at point
 	var vup = vec3(0.0, 1.0, 0.0); //up vector
 	var n = normalize( vec3(e[0]-a[0], e[1]-a[1], e[2]-a[2]));
@@ -168,9 +168,12 @@ function getFaceNormals( vertices, indexList, numTriangles){
 	console.log("Getting face normals");
 	console.log("Length of index list is " + indexList.length);
 	console.log("Amount of triangles is " + numTriangles);
-
 	var faceNormals = [];
 	for(var i = 0; i < numTriangles; i++){
+		
+		
+		console.log(vertices[indexList[3*i]][2]);
+		
 		var p0 = vec3(vertices[indexList[3*i]][0],
 					  vertices[indexList[3*i]][1],
 					  vertices[indexList[3*i]][2] );
@@ -180,7 +183,9 @@ function getFaceNormals( vertices, indexList, numTriangles){
 		var p2 = vec3(vertices[indexList[3*i+2]][0],
 					  vertices[indexList[3*i+2]][1],
 					  vertices[indexList[3*i+2]][2] );
-		//console.log(p2);
+		
+		console.log(p0+"Last P0");
+		
 			  
 		var p1minusp0 = vec3(p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]);
 		var p2minusp0 = vec3(p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2]);
@@ -204,16 +209,16 @@ function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTria
 			if(indexList[3*i] == j | indexList[3*i+1] == j | indexList[3*i+2] == j){
 				//if the j-th vertex is present in the i-th triangle
 				//and the i-th triangles face normal to vertexNormals
-				console.log("meme");
+			console.log(faceNormals[i][0]);
 				vertexNormal[0] = vertexNormal[0] + faceNormals[i][0];
 				vertexNormal[1] = vertexNormal[1] + faceNormals[i][1];
 				vertexNormal[2] = vertexNormal[2] + faceNormals[i][2];			
 			}
-			console.log(vertexNormal[0] + " " + vertexNormal[1] + " " + vertexNormal[2]);
 		}
 		console.log(j);
+		
 		vertexNormal = normalize(vertexNormal);
-		vertexNormals.push(vertexNormal);
+		
 	}
 	return vertexNormals;	
 };
