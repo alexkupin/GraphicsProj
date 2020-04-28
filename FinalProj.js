@@ -12,6 +12,25 @@ var light2Switch;
 var specularSwitch;
 var light1SwitchLocation;
 var light2SwitchLocation;
+var Mx;
+var My;
+var Mz;
+var Mt;
+var Ms;
+var Mf;
+var tx;
+var ty;
+var sx;
+var sy;
+var alpha;
+var beta;
+var gamma;
+var MxUniform;
+var MyUniform;
+var MzUniform;
+var MtUniform;
+var MsUniform;
+var MtUniform;
 
 function initGL(){
 	var canvas = document.getElementById( "gl-canvas" );
@@ -26,15 +45,46 @@ function initGL(){
 	myShaderProgram = initShaders( gl, "vertex-shader", "fragment-shader" );
 	gl.useProgram( myShaderProgram );
 	
-	numVertices = 7452; //really 48163
-	numTriangles = 2484; //really 16054?
-	//numVerticesPB = 9456;
-	//numTrianglesPB = 3152;
+	sx = 1;
+	sy = 1;
+	tx = 1;
+	ty = 1;
+	alpha = 0;
+	beta = 0;
+	gamma = 0;
+	Ms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mx = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	My = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mf = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+	MsUniform = gl.getUniformLocation( myShaderProgram, "Ms" );
+	MxUniform = gl.getUniformLocation( myShaderProgram, "Mx" );
+	MyUniform = gl.getUniformLocation( myShaderProgram, "My" );
+	MzUniform = gl.getUniformLocation( myShaderProgram, "Mz" );
+	MtUniform = gl.getUniformLocation( myShaderProgram, "Mt" );
+	gl.uniformMatrix4fv( MsUniform, false, flatten(Ms) );
+	gl.uniformMatrix4fv( MxUniform, false, flatten(Mx) );
+	gl.uniformMatrix4fv( MyUniform, false, flatten(My) );
+	gl.uniformMatrix4fv( MzUniform, false, flatten(Mz) );
+	gl.uniformMatrix4fv( MtUniform, false, flatten(Mt) );
+	
+	//numVerticesMGR = 48162
+	//numTrianglesMGR = 16054
+	//numVerticesBench = 9456;
+	//numTrianglesBench = 3152;
+	//garbage = 60756
+	//garbage = 20252
+	//swingset = 656658;
+	//swingset = 218886
+	//bench = 374
+	//bench = 700
+	numVertices = 48162;
+	numTriangles = 16054;
 	vertices = [];
-	vertices = getVerticies();
-	indexList = getFaces();
-	//verticesPB = getPBVertices();
-	//indexListPB = getPBFaces();
+	vertices = getMGRVertices();
+	indexList = getMGRFaces();
 	
 	var indexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -67,6 +117,7 @@ function initGL(){
 	
 	//modelview matrix
 	var e = vec3(50.0, 20.0, 30.0); //eye
+	//var e = vec3(0.0, 00.0, 0.0); //eye
 	var a = vec3(0.0, 0.0, 0.0); // at point
 	var vup = vec3(0.0, 1.0, 0.0); //up vector
 	var n = normalize( vec3(e[0]-a[0], e[1]-a[1], e[2]-a[2]));
@@ -172,7 +223,7 @@ function getFaceNormals( vertices, indexList, numTriangles){
 	for(var i = 0; i < numTriangles; i++){
 		
 		
-		console.log(vertices[indexList[3*i]][2]);
+		//console.log(vertices[indexList[3*i]][2]);
 		
 		var p0 = vec3(vertices[indexList[3*i]][0],
 					  vertices[indexList[3*i]][1],
@@ -184,7 +235,7 @@ function getFaceNormals( vertices, indexList, numTriangles){
 					  vertices[indexList[3*i+2]][1],
 					  vertices[indexList[3*i+2]][2] );
 		
-		console.log(p0+"Last P0");
+		//console.log(p0+"Last P0");
 		
 			  
 		var p1minusp0 = vec3(p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]);
@@ -209,15 +260,18 @@ function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTria
 			if(indexList[3*i] == j | indexList[3*i+1] == j | indexList[3*i+2] == j){
 				//if the j-th vertex is present in the i-th triangle
 				//and the i-th triangles face normal to vertexNormals
-			console.log(faceNormals[i][0]);
+			//console.log(faceNormals[i][0]);
 				vertexNormal[0] = vertexNormal[0] + faceNormals[i][0];
 				vertexNormal[1] = vertexNormal[1] + faceNormals[i][1];
 				vertexNormal[2] = vertexNormal[2] + faceNormals[i][2];			
 			}
 		}
-		console.log(j);
+		//console.log(vertexNormal[0] + " " + vertexNormal[1] + " " + vertexNormal[2]);
 		
-		vertexNormal = normalize(vertexNormal);
+		if ((vertexNormal[0] == 0)&&(vertexNormal[1] == 0)&&(vertexNormal[2] == 0)) {
+			vertexNormal = normalize(vertexNormal);
+		}
+		//vertexNormal = normalize(vertexNormal);
 		
 	}
 	return vertexNormals;	
@@ -279,4 +333,128 @@ function drawObject(){
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.drawElements(gl.TRIANGLES, 3*numTriangles, gl.UNSIGNED_SHORT, 0);
 	requestAnimFrame(drawObject);
+}
+
+function keys(event){
+		var theKeyCode = event.keyCode;
+		
+		if( theKeyCode == 88 ){ //x
+			alpha = alpha + .1;
+			Mx = [1.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  Math.cos(alpha),
+				  Math.sin(alpha),
+				  0.0,
+				  0.0,
+				  -Math.sin(alpha),
+				  Math.cos(alpha),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
+			gl.uniformMatrix4fv(MxUniform, false, flatten(Mx));
+		}else if(theKeyCode == 89 ){ //y
+			beta = beta + .1;
+			My = [Math.cos(beta),
+				  0.0,
+				  Math.sin(beta),
+				  0.0,
+				  0.0,
+				  1.0,
+				  0.0,
+				  0.0,
+				  -Math.sin(beta),
+				  0.0,
+				  Math.cos(beta),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
+			gl.uniformMatrix4fv(MyUniform, false, flatten(My));
+		}else if( theKeyCode == 90 ){ //z
+			gamma = gamma +.1;
+			Mz = [Math.cos(gamma),
+				  Math.sin(gamma),
+				  0.0,
+				  0.0,
+				  -Math.sin(gamma),
+				  Math.cos(gamma),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
+			gl.uniformMatrix4fv(MzUniform, false, flatten(Mz));
+		}
+		
+		
+		if( theKeyCode == 74 ){ //J
+			sx = sx - .01;
+		}else if(theKeyCode == 76 ){ //L
+			sx = sx + .01;
+		}else if( theKeyCode == 73 ){ //I
+			sy = sy + .01;
+		}else if( theKeyCode == 75 ){ //K
+			sy = sy - .01;
+		}
+		
+		Ms = [sx,
+			  0.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  sy,
+			  0.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  1.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  1.0];
+	    
+		gl.uniformMatrix4fv(MsUniform, false, flatten(Ms));
+		
+		if( theKeyCode == 65 ){ //A
+			tx = tx - .01;
+		}else if(theKeyCode == 68 ){ //D
+			tx = tx + .01;
+		}else if( theKeyCode == 83 ){ //S
+			ty = ty - .01;
+		}else if( theKeyCode == 87 ){ //W
+			ty = ty + .01;
+		}
+		Mt = [1.0, 
+			  0.0, 
+			  0.0, 
+			  0.0,
+			  0.0,
+			  1.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  0.0,
+			  1.0,
+			  0.0,
+			  tx,
+			  ty,
+			  0.0,
+			  1.0];
+		gl.uniformMatrix4fv(MtUniform, false, flatten(Mt));
+		
+	if( theKeyCode == 80 ){ //P
+		console.log("sx sy: " + sx + " " + sy + " //tx ty: " + tx + " " + ty + " //Alpha Gamma Beta: " + alpha + gamma + beta);
+	}
 }
