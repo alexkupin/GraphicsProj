@@ -6,9 +6,11 @@
          <script type="text/javascript" src="../Common/initShaders.js"></script>
          <script type="text/javascript" src="../Common/MV.js"></script>
          <script type="text/javascript" src="FinalProj.js"></script>
-		 <script type="text/javascript" src="MGR.js"></script>
-		 <script type="text/javascript" src="ParkBench.js"></script>
-            
+		 <script type="text/javascript" src="MerryGoRound.js"></script>
+		 <script type="text/javascript" src="Street_Bench.js"></script>
+		 <script type="text/javascript" src="swing_set.js"></script>
+		 <script type="text/javascript" src="Trash_Can.js"></script>
+		
          <script type="x-shader/x-vertex" id="vertex-shader">
             precision mediump float;
 			attribute vec4 vertexPosition;
@@ -30,6 +32,13 @@
 			uniform vec3 Ia2, Id2, Is2;
 			//varing vector for final color
 			varying vec3 R, R1, R2;
+			
+			uniform mat4 Ms;
+			uniform mat4 Mx;
+			uniform mat4 My;
+			uniform mat4 Mz;
+			uniform mat4 Mt;
+
 			void main() {
 				gl_PointSize = 1.0;
 				
@@ -123,11 +132,13 @@
 				//Get total reflection
 				R = clamp( R1+R2, 0.0, 1.0);
 				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
-
+				
+				mat4 Mf = Mt * Mz * My * Mx * Ms;
+				
 				if(orthIsOn > 0.5){
-					gl_Position = P_orth * vertexPositionTransformed;
+					gl_Position = Mt * Mz * My * Mx * Ms * P_orth * vertexPositionTransformed;
 				} else{
-					gl_Position = P_persp * vertexPositionTransformed;
+					gl_Position = Mt * Mz * My * Mx * Ms * P_persp * vertexPositionTransformed;
 				}
 				
 	        }
@@ -142,7 +153,7 @@
         </script>
 	</head>
 		
-	<body onload="initGL()" >
+	<body onload="initGL()" onkeydown = "keys(event)" >
 		<canvas width="512" height="512" id="gl-canvas" ></canvas>
 		<button id="Orthographic" onclick="showOrthographic()">
 			Orthographic
