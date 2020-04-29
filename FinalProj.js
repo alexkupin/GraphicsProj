@@ -116,10 +116,12 @@ function initGL(){
 	//set up uniforms for viewing
 	
 	//modelview matrix
-	var e = vec3(50.0, 20.0, 30.0); //eye
+	var e = vec3(-6, 12, 85.0); //eye
 	//var e = vec3(0.0, 00.0, 0.0); //eye
-	var a = vec3(0.0, 0.0, 0.0); // at point
-	var vup = vec3(0.0, 1.0, 0.0); //up vector
+	var a = vec3(-6, 2, 35.0); // at point
+	var vup = vec3(-0.984, 0.0,- .169); //up vector
+	
+	
 	var n = normalize( vec3(e[0]-a[0], e[1]-a[1], e[2]-a[2]));
 	var u = normalize(cross(vup,n));
 	var v = normalize(cross(n,u));
@@ -458,3 +460,4 @@ function keys(event){
 		console.log("sx sy: " + sx + " " + sy + " //tx ty: " + tx + " " + ty + " //Alpha Gamma Beta: " + alpha + gamma + beta);
 	}
 }
+
