@@ -133,12 +133,11 @@
 				R = clamp( R1+R2, 0.0, 1.0);
 				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
 				
-				mat4 Mf = Mt * Mz * My * Mx * Ms;
 				
 				if(orthIsOn > 0.5){
-					gl_Position = Mt * Mz * My * Mx * Ms * P_orth * vertexPositionTransformed;
+					gl_Position = Ms * Mt * Mz * My * Mx * P_orth * vertexPositionTransformed;
 				} else{
-					gl_Position = Mt * Mz * My * Mx * Ms * P_persp * vertexPositionTransformed;
+					gl_Position =Ms * Mt * Mz * My * Mx * P_persp * vertexPositionTransformed;
 				}
 				
 	        }
