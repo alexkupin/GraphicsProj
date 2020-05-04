@@ -1,24 +1,37 @@
 var gl;
-var program_MGR, program_PB;
+var program_MGR, program_PB, program_Swing;
 var numVertices_MGR, numTriangles_MGR, vertices_MGR, indexList_MGR;
 var numVertices_PB, numTriangles_PB, vertices_PB, indexList_PB;
+var numVertices_Swing, numTriangles_Swing, vertices_Swing, indexList_Swing;
 var indexBuffer_MGR, verticesBuffer_MGR, vertexPointer_MGR, faceNormals_MGR, vertexNormals_MGR, normalsBuffer_MGR, vertexNormalPointer_MGR;
 var indexBuffer_PB, verticesBuffer_PB, vertexPointer_PB, faceNormals_PB, vertexNormals_PB, normalsBuffer_PB, vertexNormalPointer_PB;
+var indexBuffer_Swing, verticesBuffer_Swing, vertexPointer_Swing, faceNormals_Swing, vertexNormals_Swing, normalsBuffer_Swing, vertexNormalPointer_Swing;
 var alphaloc;
 var ksloc;
 var p0loc;
 var iDirloc;
 var light1Switch, light2Switch, specularSwitch;
 var light1SwitchLocation, light2SwitchLocation;
+var Px, Py, Pz, Pt, Ps, Pf, Po;
+var Swx, Swy, Swz, Swt, Sws, Swf, Swo;
 var Mx, My, Mz, Mt, Ms, Mf, Mo;
 var tx, ty, tz, sx, sy;
+var Ptx, Pty, Ptz, Psx, Psy;
+var Swtx, Swty, Swtz, Swsx, Swsy;
 var alpha, beta, gamma;
+var Palpha, Pbeta, Pgamma;
+var Swalpha, Swbeta, Swgamma;
+var SwxUniform, SwyUniform, SwzUniform, SwtUniform, SwsUniform, SwtUniform, SwoUniform;
+var PxUniform, PyUniform, PzUniform, PtUniform, PsUniform, PtUniform, PoUniform;
 var MxUniform, MyUniform, MzUniform, MtUniform, MsUniform, MtUniform, MoUniform;
 var perspectiveProjectionMatrix1, perspectiveProjectionMatrix2, perspectiveProjectionMatrixLocation1, perspectiveProjectionMatrixLocation2;
 var modelviewMatrixInverseTranspose, modelviewMatrix
 var modelviewMatrixInverseTransposeLocation1 ,modelviewMatrixLocation1, modelviewMatrixInverseTransposeLocation2, modelviewMatrixLocation2;
+var leftMG,rightMG,nearMG,bottomMG,topMG,farMG;
+
 function initGL(){
 	var canvas = document.getElementById( "gl-canvas" );
+	
 	
 	gl = WebGLUtils.setupWebGL( canvas );
 	if ( !gl ) { alert( "WebGL isn't available" ); }
@@ -28,7 +41,7 @@ function initGL(){
 	gl.clearColor( 1.0, 1.0, 1.0, 1.0);	
 	
 	//modelview matrix
-	var e = vec3(10.0, 0.0, 10.0); //eye
+	var e = vec3(10.0, 10.0, 10.0); //eye
 	var a = vec3(0.0, 0.0, 0.0); // at point
 	var vup = vec3(0.0, 1.0, 0.0); //up vector
 	var n = normalize( vec3(e[0]-a[0], e[1]-a[1], e[2]-a[2]));
@@ -47,6 +60,7 @@ function initGL(){
 
 	initMGL();
 	initPB();
+	initSwing();
 	light();
 	
 	light1Switch = 0;
@@ -155,10 +169,10 @@ function keys(event){
 				  0.0,
 				  0.0,
 				  Math.cos(alpha),
+				 -Math.sin(alpha),
+				  0.0,
+				  0.0,
 				  Math.sin(alpha),
-				  0.0,
-				  0.0,
-				  -Math.sin(alpha),
 				  Math.cos(alpha),
 				  0.0,
 				  0.0,
@@ -170,13 +184,13 @@ function keys(event){
 			beta = beta + .1;
 			My = [Math.cos(beta),
 				  0.0,
-				  Math.sin(beta),
+				 -Math.sin(beta),
 				  0.0,
 				  0.0,
 				  1.0,
 				  0.0,
 				  0.0,
-				  -Math.sin(beta),
+				  Math.sin(beta),
 				  0.0,
 				  Math.cos(beta),
 				  0.0,
@@ -188,10 +202,10 @@ function keys(event){
 		}else if( theKeyCode == 90 ){ //z
 			gamma = gamma +.1;
 			Mz = [Math.cos(gamma),
-				  Math.sin(gamma),
-				  0.0,
-				  0.0,
 				  -Math.sin(gamma),
+				  0.0,
+				  0.0,
+				  Math.sin(gamma),
 				  Math.cos(gamma),
 				  0.0,
 				  0.0,
@@ -314,31 +328,31 @@ function initMGL(){
 	vertices_MGR = getVertices();
 	indexList_MGR = getFaces();
 	
+	 leftMG = -5.0;
+	 rightMG = 5.0;
+	 topMG = 5.0;
+	 bottomMG = -5.0;
+	 nearMG = 10;
+	 farMG = 20.0;
+	
 	sx = sy = 1;
 	tx = ty = tz = 0;
 	alpha = beta = gamma = 0;
 	Ms = Mx = My = Mz = Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	
 	//projection matrix
-	var left = -5.0;
-	var right = 5.0;
-	var top_ = 5.0;
-	var bottom = -5.0;
-	var near = 10;
-	var far = 20.0;
 	
 	//perspective projection matrix
 	perspectiveProjectionMatrix1 = 
-		[2.0*near/(right-left), .0, .0, .0,
-		 .0, 2.0*near/(top_-bottom), .0, .0,
-		 (right+left)/(right-left), (top_+bottom)/(top_-bottom), -(far+near)/(far-near), -1.0,
-		 .0, .0, -(2.0*far*near)/(far-near), .0];
+		[2.0*nearMG/(rightMG-leftMG), .0, .0, .0,
+		 .0, 2.0*nearMG/(topMG-bottomMG), .0, .0,
+		 (rightMG+leftMG)/(rightMG-leftMG), (topMG+bottomMG)/(topMG-bottomMG), -(farMG+nearMG)/(farMG-nearMG), -1.0,
+		 .0, .0, -(2.0*farMG*nearMG)/(farMG-nearMG), .0];
 	
 	program_MGR = initShaders( gl, "MGR_vertex-shader", "MGR_fragment-shader" );
 	gl.useProgram(program_MGR );
 	
-	perspectiveProjectionMatrixLocation1 = gl.getUniformLocation(program_MGR, "P_persp");
-	gl.uniformMatrix4fv(perspectiveProjectionMatrixLocation1, false, perspectiveProjectionMatrix1);
+	
 	
 	indexBuffer_MGR = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_MGR);
@@ -393,6 +407,13 @@ function initPB(){
 	var near = 10;
 	var far = 20.0;
 	
+	Psx = Psy = 1;
+	Ptx =0;
+	Pty =.5;
+	Ptz =0;
+	Palpha = Pbeta = Pgamma = 0;
+	Ps = Px = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Pt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Ptx, Pty, Ptz, 1];
 	//perspective projection matrix
 	perspectiveProjectionMatrix2 = 
 		[2.0*near/(right-left), .0, .0, .0,
@@ -428,6 +449,174 @@ function initPB(){
 	modelviewMatrixLocation2 = gl.getUniformLocation(program_PB, "M");
 	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
 	
+	gl.useProgram(program_PB );
+
+	//coefficients for object
+	var kaloc = gl.getUniformLocation(program_PB, "ka");
+	var kdloc = gl.getUniformLocation(program_PB, "kd");
+	ksloc = gl.getUniformLocation(program_PB, "ks");
+	gl.uniform3f(kaloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(kdloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(ksloc, 1.0, 1.0, 1.0);
+	alphaloc = gl.getUniformLocation(program_PB, "alpha");
+	gl.uniform1f(alphaloc, 4.0);
+	specularSwitch = 1;
+	
+	p0loc = gl.getUniformLocation(program_PB, "p0");
+	gl.uniform3f(p0loc, 0.0, 0.0, 45.0);
+	
+	//values for light components
+	var Ia1loc = gl.getUniformLocation(program_PB, "Ia1");
+	var Id1loc = gl.getUniformLocation(program_PB, "Id1");
+	var Is1loc = gl.getUniformLocation(program_PB, "Is1");
+	gl.uniform3f(Ia1loc, 0.1, 0.1, 0.1);
+	gl.uniform3f(Id1loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is1loc, 0.8, 0.8, 0.8);
+	
+	iDirloc = gl.getUniformLocation(program_PB, "iDir");
+	gl.uniform3f(iDirloc, 0.5, 0.7, 1);
+	
+	var Ia2loc = gl.getUniformLocation(program_PB, "Ia2");
+	var Id2loc = gl.getUniformLocation(program_PB, "Id2");
+	var Is2loc = gl.getUniformLocation(program_PB, "Is2");
+	gl.uniform3f(Ia2loc, 0.1, 0.1, 0.5);
+	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
+	
+	modelviewMatrixLocation2 = gl.getUniformLocation(program_PB, "M");
+	modelviewMatrixInverseTransposeLocation2 = gl.getUniformLocation(program_PB, "M_inversetranspose");
+	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
+	gl.uniformMatrix4fv(modelviewMatrixInverseTransposeLocation2, false, modelviewMatrixInverseTranspose);
+	
+	vertexNormalPointer_PB = gl.getAttribLocation(program_PB, "nv");
+	gl.vertexAttribPointer( vertexNormalPointer_PB, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray( vertexNormalPointer_PB );
+	
+	PsUniform = gl.getUniformLocation(program_PB, "Ps" );
+	PxUniform = gl.getUniformLocation(program_PB, "Px" );
+	PyUniform = gl.getUniformLocation(program_PB, "Py" );
+	PzUniform = gl.getUniformLocation(program_PB, "Pz" );
+	PtUniform = gl.getUniformLocation(program_PB, "Pt" );
+	gl.uniformMatrix4fv( PsUniform, false, flatten(Ps) );
+	gl.uniformMatrix4fv( PxUniform, false, flatten(Px) );
+	gl.uniformMatrix4fv( PyUniform, false, flatten(Py) );
+	gl.uniformMatrix4fv( PzUniform, false, flatten(Pz) );
+	gl.uniformMatrix4fv( PtUniform, false, flatten(Pt) );
+	
+}
+
+function initSwing(){
+	numVertices_Swing = 996;
+	numTriangles_Swing = 1894;
+	vertices_Swing = getSwingVertices();
+	indexList_Swing = getSwingFaces();
+	
+	//projection matrix
+	var left = -5.0;
+	var right = 5.0;
+	var top_ = 5.0;
+	var bottom = -5.0;
+	var near = 10;
+	var far = 30.0;
+	
+	
+	Swsx = Swsy = 1;
+	Swtx=0;
+	Swty=0;
+	Swtz=0;
+	Swalpha = Swbeta = Swgamma = 0;
+	Sws = Swx = Swy = Swz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Swt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Swtx, Swty, Swtz, 1];
+	
+	//perspective projection matrix
+	perspectiveProjectionMatrix2 = 
+		[2.0*near/(right-left), .0, .0, .0,
+		 .0, 2.0*near/(top_-bottom), .0, .0,
+		 (right+left)/(right-left), (top_+bottom)/(top_-bottom), -(far+near)/(far-near), -1.0,
+		 .0, .0, -(2.0*far*near)/(far-near), .0];	
+	
+	program_Swing = initShaders( gl, "Swing_vertex-shader", "Swing_fragment-shader" );
+	gl.useProgram(program_Swing);
+	
+	perspectiveProjectionMatrixLocation2 = gl.getUniformLocation(program_Swing, "P_persp");
+	gl.uniformMatrix4fv(perspectiveProjectionMatrixLocation2, false, perspectiveProjectionMatrix2);
+	
+	indexBuffer_Swing = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_Swing);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexList_Swing), gl.STATIC_DRAW);
+	
+	verticesBuffer_Swing = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer_Swing);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices_Swing), gl.STATIC_DRAW);
+	
+	vertexPointer_Swing = gl.getAttribLocation(program_Swing, "vertexPosition");
+	gl.vertexAttribPointer( vertexPointer_Swing, 4, gl.FLOAT, false, 0, 0 );
+	gl.enableVertexAttribArray(vertexPointer_Swing);
+		
+	faceNormals_Swing = getFaceNormals( vertices_Swing, indexList_Swing, numTriangles_Swing);
+	vertexNormals_Swing = getVertexNormals( vertices_Swing, indexList_Swing, faceNormals_Swing, numVertices_Swing, numTriangles_Swing);
+	
+	normalsBuffer_Swing = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_Swing);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexNormals_Swing), gl.STATIC_DRAW);
+	
+	modelviewMatrixLocation2 = gl.getUniformLocation(program_Swing, "M");
+	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
+	
+	gl.useProgram(program_Swing );
+
+	//coefficients for object
+	var kaloc = gl.getUniformLocation(program_Swing, "ka");
+	var kdloc = gl.getUniformLocation(program_Swing, "kd");
+	ksloc = gl.getUniformLocation(program_Swing, "ks");
+	gl.uniform3f(kaloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(kdloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(ksloc, 1.0, 1.0, 1.0);
+	alphaloc = gl.getUniformLocation(program_Swing, "alpha");
+	gl.uniform1f(alphaloc, 4.0);
+	specularSwitch = 1;
+	
+	p0loc = gl.getUniformLocation(program_Swing, "p0");
+	gl.uniform3f(p0loc, 0.0, 0.0, 45.0);
+	
+	//values for light components
+	var Ia1loc = gl.getUniformLocation(program_Swing, "Ia1");
+	var Id1loc = gl.getUniformLocation(program_Swing, "Id1");
+	var Is1loc = gl.getUniformLocation(program_Swing, "Is1");
+	gl.uniform3f(Ia1loc, 0.1, 0.1, 0.1);
+	gl.uniform3f(Id1loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is1loc, 0.8, 0.8, 0.8);
+	
+	iDirloc = gl.getUniformLocation(program_Swing, "iDir");
+	gl.uniform3f(iDirloc, 0.5, 0.7, 1);
+	
+	var Ia2loc = gl.getUniformLocation(program_Swing, "Ia2");
+	var Id2loc = gl.getUniformLocation(program_Swing, "Id2");
+	var Is2loc = gl.getUniformLocation(program_Swing, "Is2");
+	gl.uniform3f(Ia2loc, 0.1, 0.1, 0.5);
+	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
+	
+	modelviewMatrixLocation2 = gl.getUniformLocation(program_Swing, "M");
+	modelviewMatrixInverseTransposeLocation2 = gl.getUniformLocation(program_Swing, "M_inversetranspose");
+	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
+	gl.uniformMatrix4fv(modelviewMatrixInverseTransposeLocation2, false, modelviewMatrixInverseTranspose);
+	
+	vertexNormalPointer_Swing = gl.getAttribLocation(program_Swing, "nv");
+	gl.vertexAttribPointer( vertexNormalPointer_Swing, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray( vertexNormalPointer_Swing );
+	
+	SwsUniform = gl.getUniformLocation(program_Swing, "Sws" );
+	SwxUniform = gl.getUniformLocation(program_Swing, "Swx" );
+	SwyUniform = gl.getUniformLocation(program_Swing, "Swy" );
+	SwzUniform = gl.getUniformLocation(program_Swing, "Swz" );
+	SwtUniform = gl.getUniformLocation(program_Swing, "Swt" );
+	gl.uniformMatrix4fv( SwsUniform, false, flatten(Sws) );
+	gl.uniformMatrix4fv( SwxUniform, false, flatten(Swx) );
+	gl.uniformMatrix4fv( SwyUniform, false, flatten(Swy) );
+	gl.uniformMatrix4fv( SwzUniform, false, flatten(Swz) );
+	gl.uniformMatrix4fv( SwtUniform, false, flatten(Swt) );
+	
 }
 
 function drawMGR(){
@@ -444,6 +633,17 @@ function drawMGR(){
 	
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_MGR);
 	gl.drawElements(gl.TRIANGLES, 3*numTriangles_MGR, gl.UNSIGNED_SHORT, 0);
+
+	perspectiveProjectionMatrix1 = 
+		[2.0*nearMG/(rightMG-leftMG), .0, .0, .0,
+		 .0, 2.0*nearMG/(topMG-bottomMG), .0, .0,
+		 (rightMG+leftMG)/(rightMG-leftMG), (topMG+bottomMG)/(topMG-bottomMG), -(farMG+nearMG)/(farMG-nearMG), -1.0,
+		 .0, .0, -(2.0*farMG*nearMG)/(farMG-nearMG), .0];
+
+	
+	perspectiveProjectionMatrixLocation1 = gl.getUniformLocation(program_MGR, "P_persp");
+	gl.uniformMatrix4fv(perspectiveProjectionMatrixLocation1, false, perspectiveProjectionMatrix1);
+
 }
 
 function drawPB(){
@@ -463,10 +663,28 @@ function drawPB(){
 	gl.drawElements(gl.TRIANGLES, 3*numTriangles_PB, gl.UNSIGNED_SHORT, 0);
 }
 
+function drawSwing(){
+	//console.log("Here");
+	gl.useProgram(program_Swing);
+	
+	//bind buffers and set up pointer
+	gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer_Swing);
+	gl.enableVertexAttribArray(vertexPointer_Swing);
+	gl.vertexAttribPointer( vertexPointer_Swing, 4, gl.FLOAT, false, 0, 0 );
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_Swing);
+	gl.enableVertexAttribArray( vertexNormalPointer_Swing );
+	gl.vertexAttribPointer( vertexNormalPointer_Swing, 3, gl.FLOAT, false, 0, 0);
+	
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_Swing);
+	gl.drawElements(gl.TRIANGLES, 3*numTriangles_Swing, gl.UNSIGNED_SHORT, 0);
+}
+
 function render(){
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	drawMGR();
 	drawPB();
+	drawSwing();
 	requestAnimFrame(render);
 
 }
