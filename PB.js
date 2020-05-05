@@ -1,4 +1,4 @@
-function getVertices(){
+function getPBVertices(){
 verticies = [vec4(1.16660,0.85960,0.62980,1.0),
 vec4(2.33320,0.92040,0.62980,1.0),
 vec4(1.16660,0.92040,0.62980,1.0),
@@ -357,7 +357,7 @@ vec4(-0.00860,1.46580,-0.32240,1.0),
 vec4(-0.00860,1.46580,-0.31060,1.0)
 ];
  return verticies;
- }function getNormals(){
+ }function getPBNormals(){
 vns = [vec4(0.000,0.000,1.000, 1.0),
 vec4(0.000,0.000,1.000, 1.0),
 vec4(0.000,0.000,1.000, 1.0),
@@ -1104,7 +1104,7 @@ vec4(-1.000,0.000,0.000, 1.0),
 vec4(-1.000,0.000,0.000, 1.0)
 ];
  return vns;
- }function getTextureCoord(){
+ }function getPBTextureCoord(){
 vt = [0.822368,0.317148,
 0.790897,0.205306,
 0.828167,0.317148,
@@ -1910,7 +1910,7 @@ vt = [0.822368,0.317148,
 0.138657,0.560252
 ];
  return vt;
- }function getFaces(){
+ }function getPBFaces(){
 faces = [80,84,94,
 97,96,90,
 95,94,84,

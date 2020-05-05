@@ -5,7 +5,7 @@
          <script type="text/javascript" src="../Common/webgl-utils.js"></script>
          <script type="text/javascript" src="../Common/initShaders.js"></script>
          <script type="text/javascript" src="../Common/MV.js"></script>
-         <script type="text/javascript" src="FinalProj2.js"></script>
+         <script type="text/javascript" src="FinalProj.js"></script>
 		 <script type="text/javascript" src="MGR_Alex_Final.js"></script>
 		 <script type="text/javascript" src="PB.js"></script>
 		 <script type="text/javascript" src="Swing.js"></script>
@@ -40,8 +40,13 @@
 			uniform mat4 Mz;
 			uniform mat4 Mt;
 
+			attribute vec2 textureCoordinate;
+			varying vec2 fTextureCoordinate;
+
 			void main() {
 				gl_PointSize = 1.0;
+				
+				fTextureCoordinate = textureCoordinate;
 				
 				//transform vertices by the modelview matrix
 				vec4 vertexPositionTransformed = M * vertexPosition;
@@ -140,9 +145,12 @@
        
         <script type="x-shader/x-fragment" id="MGR_fragment-shader">
             precision mediump float;
+			varying vec2 fTextureCoordinate;
+			uniform sampler2D texMap0;
 			varying vec3 R;
 			void main() {
-				gl_FragColor = vec4(R.r, R.g, R.b, 1.0);
+				vec4 color0 = texture2D(texMap0, fTextureCoordinate);
+				gl_FragColor = vec4(R.r+color0.r, R.g+color0.g, R.b+color0.b, 1.0);
             }
         </script>
 		
@@ -317,8 +325,14 @@
 			uniform mat4 Swz;
 			uniform mat4 Swt;
 
+			attribute vec2 textureCoordinate;
+			varying vec2 fTextureCoordinate;
+			
 			void main() {
 				gl_PointSize = 1.0;
+				
+				fTextureCoordinate = textureCoordinate;
+
 				
 				//transform vertices by the modelview matrix
 				vec4 vertexPositionTransformed = M * vertexPosition;
@@ -418,10 +432,13 @@
         </script>
        
         <script type="x-shader/x-fragment" id="Swing_fragment-shader">
-             precision mediump float;
+            precision mediump float;
+			varying vec2 fTextureCoordinate;
+			uniform sampler2D texMap0;
 			varying vec3 R;
 			void main() {
-				gl_FragColor = vec4(R.r, R.g, R.b, 1.0);
+				vec4 color0 = texture2D(texMap0, fTextureCoordinate);
+				gl_FragColor = vec4(R.r+color0.r, R.g+color0.g, R.b+color0.b, 1.0);
             }
         </script>
 		
@@ -445,5 +462,7 @@
 			Specular Reflection
 		</button>
 		<img id="wood" hidden src="wood.jpg" />
+		<img id="metal" hidden src="metal.jpg" />
+		
 	</body>
 </html>

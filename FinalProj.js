@@ -7,6 +7,8 @@ var indexBuffer_MGR, verticesBuffer_MGR, vertexPointer_MGR, faceNormals_MGR, ver
 var indexBuffer_PB, verticesBuffer_PB, vertexPointer_PB, faceNormals_PB, vertexNormals_PB, normalsBuffer_PB, vertexNormalPointer_PB;
 var indexBuffer_Swing, verticesBuffer_Swing, vertexPointer_Swing, faceNormals_Swing, vertexNormals_Swing, normalsBuffer_Swing, vertexNormalPointer_Swing;
 var textureVertexbuffer_PB, textureCoordinate_PB;
+var textureVertexbuffer_MGR, textureCoordinate_MGR;
+var textureVertexbuffer_Swing, textureCoordinate_Swing;
 var alphaloc;
 var ksloc;
 var p0loc;
@@ -29,6 +31,8 @@ var perspectiveProjectionMatrix1, perspectiveProjectionMatrix2, perspectiveProje
 var modelviewMatrixInverseTranspose, modelviewMatrix
 var modelviewMatrixInverseTransposeLocation1 ,modelviewMatrixLocation1, modelviewMatrixInverseTransposeLocation2, modelviewMatrixLocation2;
 var leftMG,rightMG,nearMG,bottomMG,topMG,farMG;
+var myImageMetal;
+var textureImageMetal;
 
 function initGL(){
 	var canvas = document.getElementById( "gl-canvas" );
@@ -326,8 +330,10 @@ function light(){
 function initMGR(){
 	numVertices_MGR = 436;
 	numTriangles_MGR = 819;
-	vertices_MGR = getVertices();
-	indexList_MGR = getFaces();
+	vertices_MGR = getMGRVertices();
+	indexList_MGR = getMGRFaces();
+	textureCoordinates_MGR = getMGRTextureCoord();
+
 	
 	 leftMG = -5.0;
 	 rightMG = 5.0;
@@ -344,6 +350,7 @@ function initMGR(){
     Mx = My = Mz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1];
 	Ms = [sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
 
 	
 	//projection matrix
@@ -377,6 +384,14 @@ function initMGR(){
 	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_MGR);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexNormals_MGR), gl.STATIC_DRAW);
 	
+	textureVertexbuffer_MGR = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, textureVertexbuffer_MGR);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates_MGR), gl.STATIC_DRAW);
+	
+	textureCoordinate_MGR = gl.getAttribLocation(program_MGR, "textureCoordinate");
+	gl.vertexAttribPointer(textureCoordinate_MGR, 2, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(textureCoordinate_MGR);
+	
 	vertexNormalPointer_MGR = gl.getAttribLocation(program_MGR, "nv");
 	gl.vertexAttribPointer( vertexNormalPointer_MGR, 3, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray( vertexNormalPointer_MGR );
@@ -391,6 +406,17 @@ function initMGR(){
 	gl.uniformMatrix4fv( MyUniform, false, flatten(My) );
 	gl.uniformMatrix4fv( MzUniform, false, flatten(Mz) );
 	gl.uniformMatrix4fv( MtUniform, false, flatten(Mt) );
+	
+	myImageMetal = document.getElementById("metal");
+	textureImageMetal = gl.createTexture();
+	
+	gl.bindTexture(gl.TEXTURE_2D, textureImageMetal);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImageMetal);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	gl.generateMipmap(gl.TEXTURE_2D);
+	
 	modelviewMatrixLocation1 = gl.getUniformLocation(program_MGR, "M");
 	modelviewMatrixInverseTransposeLocation1 = gl.getUniformLocation(program_MGR, "M_inversetranspose");
 	gl.uniformMatrix4fv(modelviewMatrixLocation1, false, modelviewMatrix);
@@ -414,12 +440,30 @@ function initPB(){
 	var far = 20.0;
 	
 	Psx = Psy = 1;
-	Ptx =0;
-	Pty =.5;
-	Ptz =0;
-	Palpha = Pbeta = Pgamma = 0;
-	Ps = Px = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Ptx =.5;
+	Pty =.2;
+	Ptz =-.5;
+	Palpha = 0;
+	Pbeta =  0;
+	Pgamma = 0;
+	Ps = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	Pt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Ptx, Pty, Ptz, 1];
+	Px = [		  1.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  Math.cos(Palpha),
+				 -Math.sin(Palpha),
+				  0.0,
+				  0.0,
+				  Math.sin(Palpha),
+				  Math.cos(Palpha),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
 	//perspective projection matrix
 	perspectiveProjectionMatrix2 = 
 		[2.0*near/(right-left), .0, .0, .0,
@@ -518,7 +562,6 @@ function initPB(){
 	gl.uniformMatrix4fv( PtUniform, false, flatten(Pt) );
 	
 	myImage = document.getElementById("wood");
-	textureImage = gl.createTexture();
 	
 	textureImage = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, textureImage);
@@ -535,7 +578,8 @@ function initSwing(){
 	numTriangles_Swing = 1894;
 	vertices_Swing = getSwingVertices();
 	indexList_Swing = getSwingFaces();
-	
+	textureCoordinates_Swing = getSwingTextureCoord();
+
 	//projection matrix
 	var left = -5.0;
 	var right = 5.0;
@@ -546,7 +590,7 @@ function initSwing(){
 	
 	
 	Swsx = Swsy = 1;
-	Swtx=0;
+	Swtx=-.5;
 	Swty=0;
 	Swtz=0;
 	Swalpha = Swbeta = Swgamma = 0;
@@ -584,6 +628,14 @@ function initSwing(){
 	normalsBuffer_Swing = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_Swing);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexNormals_Swing), gl.STATIC_DRAW);
+	
+	textureVertexbuffer_Swing = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, textureVertexbuffer_Swing);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates_Swing), gl.STATIC_DRAW);
+	
+	textureCoordinate_PB = gl.getAttribLocation(program_PB, "textureCoordinate");
+	gl.vertexAttribPointer(textureCoordinate_PB, 2, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(textureCoordinate_PB);
 	
 	modelviewMatrixLocation2 = gl.getUniformLocation(program_Swing, "M");
 	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
@@ -642,6 +694,13 @@ function initSwing(){
 	gl.uniformMatrix4fv( SwzUniform, false, flatten(Swz) );
 	gl.uniformMatrix4fv( SwtUniform, false, flatten(Swt) );
 	
+	
+	gl.bindTexture(gl.TEXTURE_2D, textureImageMetal);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImageMetal);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	gl.generateMipmap(gl.TEXTURE_2D);
 }
 
 function drawMGR(){
@@ -656,9 +715,10 @@ function drawMGR(){
 	gl.enableVertexAttribArray( vertexNormalPointer_MGR );
 	gl.vertexAttribPointer( vertexNormalPointer_MGR, 3, gl.FLOAT, false, 0, 0);
 	
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_MGR);
-	gl.drawElements(gl.TRIANGLES, 3*numTriangles_MGR, gl.UNSIGNED_SHORT, 0);
-
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,  textureImageMetal);
+	gl.uniform1i(gl.getUniformLocation(program_MGR, "texMap0"), 0);
+	
 	perspectiveProjectionMatrix1 = 
 		[2.0*nearMG/(rightMG-leftMG), .0, .0, .0,
 		 .0, 2.0*nearMG/(topMG-bottomMG), .0, .0,
@@ -668,6 +728,11 @@ function drawMGR(){
 	
 	perspectiveProjectionMatrixLocation1 = gl.getUniformLocation(program_MGR, "P_persp");
 	gl.uniformMatrix4fv(perspectiveProjectionMatrixLocation1, false, perspectiveProjectionMatrix1);
+	
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_MGR);
+	gl.drawElements(gl.TRIANGLES, 3*numTriangles_MGR, gl.UNSIGNED_SHORT, 0);
+
+
 
 }
 
@@ -710,8 +775,14 @@ function drawSwing(){
 	gl.enableVertexAttribArray( vertexNormalPointer_Swing );
 	gl.vertexAttribPointer( vertexNormalPointer_Swing, 3, gl.FLOAT, false, 0, 0);
 	
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,  textureImageMetal);
+	gl.uniform1i(gl.getUniformLocation(program_Swing, "texMap0"), 0);
+	
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_Swing);
 	gl.drawElements(gl.TRIANGLES, 3*numTriangles_Swing, gl.UNSIGNED_SHORT, 0);
+	
+	
 }
 
 function render(){
@@ -721,3 +792,5 @@ function render(){
 	drawSwing();
 	requestAnimFrame(render);
 }
+
+ 
