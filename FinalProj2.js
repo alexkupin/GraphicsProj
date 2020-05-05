@@ -222,13 +222,13 @@ function keys(event){
 		
 		
 		if( theKeyCode == 74 ){ //J
-			sx = sx - .01;
+			sx = sx - .1;
 		}else if(theKeyCode == 76 ){ //L
-			sx = sx + .01;
+			sx = sx + .1;
 		}else if( theKeyCode == 73 ){ //I
-			sy = sy + .01;
+			sy = sy + .1;
 		}else if( theKeyCode == 75 ){ //K
-			sy = sy - .01;
+			sy = sy - .1;
 		}
 		
 		Ms = [sx,
@@ -335,10 +335,15 @@ function initMGL(){
 	 nearMG = 10;
 	 farMG = 20.0;
 	
-	sx = sy = 1;
-	tx = ty = tz = 0;
+	sx = sy = 3;
+	tx = 0.1;
+	ty = .055;
+	tz = .1;
 	alpha = beta = gamma = 0;
-	Ms = Mx = My = Mz = Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    Mx = My = Mz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1];
+	Ms = [sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
 	
 	//projection matrix
 	
@@ -408,12 +413,30 @@ function initPB(){
 	var far = 20.0;
 	
 	Psx = Psy = 1;
-	Ptx =0;
-	Pty =.5;
-	Ptz =0;
-	Palpha = Pbeta = Pgamma = 0;
-	Ps = Px = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Ptx =.5;
+	Pty =.2;
+	Ptz =-.5;
+	Palpha = 0;
+	Pbeta =  0;
+	Pgamma = 0;
+	Ps = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	Pt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Ptx, Pty, Ptz, 1];
+	Px = [		  1.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  Math.cos(Palpha),
+				 -Math.sin(Palpha),
+				  0.0,
+				  0.0,
+				  Math.sin(Palpha),
+				  Math.cos(Palpha),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
 	//perspective projection matrix
 	perspectiveProjectionMatrix2 = 
 		[2.0*near/(right-left), .0, .0, .0,
@@ -521,7 +544,7 @@ function initSwing(){
 	
 	
 	Swsx = Swsy = 1;
-	Swtx=0;
+	Swtx=-.5;
 	Swty=0;
 	Swtz=0;
 	Swalpha = Swbeta = Swgamma = 0;

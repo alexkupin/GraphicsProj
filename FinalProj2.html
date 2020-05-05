@@ -134,7 +134,7 @@
 				R = clamp( R1+R2, 0.0, 1.0);
 				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
 				
-				gl_Position = Ms * Mt * Mz * My * Mx * P_persp * vertexPositionTransformed;	
+				gl_Position = Ms * Mt * Mz * My * Mx *P_persp* vertexPositionTransformed;	
 	        }
         </script>
        
@@ -270,7 +270,7 @@
 				
 				
 				gl_PointSize = 1.0;
-				gl_Position = Ps * Pt * Pz * Py * Px * P_persp * vertexPositionTransformed;	
+				gl_Position = Ps * Pt * Pz * Py * Px  *P_persp* vertexPositionTransformed;	
 	        }
         </script>
        
@@ -404,7 +404,7 @@
 				
 				
 				gl_PointSize = 1.0;
-				gl_Position = Sws * Swt * Swz * Swy * Swx * P_persp * vertexPositionTransformed;	
+				gl_Position = Sws * Swt * Swz * Swy * Swx *P_persp * vertexPositionTransformed;	
 	        }
         </script>
        
