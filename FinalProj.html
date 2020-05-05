@@ -5,13 +5,14 @@
          <script type="text/javascript" src="../Common/webgl-utils.js"></script>
          <script type="text/javascript" src="../Common/initShaders.js"></script>
          <script type="text/javascript" src="../Common/MV.js"></script>
-         <script type="text/javascript" src="FinalProj.js"></script>
-		 <script type="text/javascript" src="MerryGoRound.js"></script>
-		 <script type="text/javascript" src="Street_Bench.js"></script>
-		 <script type="text/javascript" src="swing_set.js"></script>
-		 <script type="text/javascript" src="Trash_Can.js"></script>
+         <script type="text/javascript" src="FinalProj2.js"></script>
+		 <script type="text/javascript" src="MGR_Alex_Final.js"></script>
+		 <script type="text/javascript" src="PB.js"></script>
+		 <script type="text/javascript" src="Swing.js"></script>
+		 
 		
-         <script type="x-shader/x-vertex" id="vertex-shader">
+          <script type="x-shader/x-vertex" id="MGR_vertex-shader">
+		  
             precision mediump float;
 			attribute vec4 vertexPosition;
 			attribute vec3 nv;
@@ -133,23 +134,297 @@
 				R = clamp( R1+R2, 0.0, 1.0);
 				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
 				
-				
-				if(orthIsOn > 0.5){
-					gl_Position = Ms * Mt * Mz * My * Mx * P_orth * vertexPositionTransformed;
-				} else{
-					gl_Position =Ms * Mt * Mz * My * Mx * P_persp * vertexPositionTransformed;
-				}
-				
+				gl_Position = Ms * Mt * Mz * My * Mx * P_persp * vertexPositionTransformed;	
 	        }
         </script>
        
-        <script type="x-shader/x-fragment" id="fragment-shader">
+        <script type="x-shader/x-fragment" id="MGR_fragment-shader">
             precision mediump float;
 			varying vec3 R;
 			void main() {
 				gl_FragColor = vec4(R.r, R.g, R.b, 1.0);
             }
         </script>
+		
+		
+		<script type="x-shader/x-vertex" id="PB_vertex-shader">
+          precision mediump float;
+			attribute vec4 vertexPosition;
+			attribute vec3 nv;
+			
+			uniform mat4 M, M_inversetranspose, P_persp;
+			uniform float light1SwitchShader;
+			uniform float light2SwitchShader;
+			//uniforms for ambient, diffuse, and specular
+			uniform vec3 ka,kd,ks;
+			//uniform for shininess
+			uniform float alpha;
+			//uniform for position for light sources
+			uniform vec3 p0; // point light source
+			uniform vec3 iDir;
+			//uniforms for ambient, diffuse, and specular components for point light source
+			uniform vec3 Ia1, Id1, Is1;
+			uniform vec3 Ia2, Id2, Is2;
+			//varing vector for final color
+			varying vec3 R, R1, R2;
+			
+			uniform mat4 Ps;
+			uniform mat4 Px;
+			uniform mat4 Py;
+			uniform mat4 Pz;
+			uniform mat4 Pt;
+			
+			attribute vec2 textureCoordinate;
+			varying vec2 fTextureCoordinate;
+
+			void main() {
+				gl_PointSize = 1.0;
+				
+				fTextureCoordinate = textureCoordinate;
+				
+				//transform vertices by the modelview matrix
+				vec4 vertexPositionTransformed = M * vertexPosition;
+				
+				vec4 nv4 = vec4(nv.x, nv.y, nv.z, 1.0);
+				vec4 nv4transformed = M_inversetranspose * nv4;
+				vec3 nvtransformed = normalize(nv4transformed.xyz);
+				
+				//get reflection for light source
+				float distance = length(p0 - vertexPositionTransformed.xyz);
+				float a = .00005;
+				float b = .0;
+				float c = .0;
+				
+				float scalefactor = a * distance * distance + b * distance + c;
+				vec3 Ia1_pp0 = Ia1 / scalefactor;
+				vec3 Id1_pp0 = Id1 / scalefactor;
+				vec3 Is1_pp0 = Is1 / scalefactor;
+				
+				vec3 Ia2_i = Ia2;
+				vec3 Id2_i = Id2;
+				vec3 Is2_i = Is2;
+				
+				//Initialize reflections
+				vec3 Ra1, Rd1, Rs1;
+				vec3 Ra2, Rd2, Rs2;
+				
+				//ambient reflection
+				Ra1.r = ka.r * Ia1_pp0.r;
+				Ra1.g = ka.g * Ia1_pp0.g;
+				Ra1.b = ka.b * Ia1_pp0.b;
+				
+				Ra2.r = ka.r * Ia2_i.r;
+				Ra2.g = ka.g * Ia2_i.g;
+				Ra2.b = ka.b * Ia2_i.b;
+				
+				//diffuse reflection
+				vec3 i = normalize(p0 - vertexPositionTransformed.xyz);
+				float costheta = dot(i, nvtransformed);
+				Rd1.r = kd.r * Id1_pp0.r * max(costheta, 0.0);
+				Rd1.g = kd.r * Id1_pp0.g * max(costheta, 0.0);
+				Rd1.b = kd.r * Id1_pp0.b * max(costheta, 0.0);
+				
+				float costheta2 = dot(iDir, nvtransformed);
+				Rd2.r = kd.r * Id2_i.r * max(costheta2, 0.0);
+				Rd2.g = kd.r * Id2_i.g * max(costheta2, 0.0);
+				Rd2.b = kd.r * Id2_i.b * max(costheta2, 0.0);
+				
+				//spectacualr reflection - Point Light
+				vec3 r = 2.0 * costheta * nvtransformed - i;
+				vec3 view = normalize(vec3(.0,.0,.0)-vertexPositionTransformed.xyz);
+				float cosphi = dot(r, view);
+				float shine = pow(max(cosphi, 0.0), alpha);
+				float account;
+				if(costheta > 1.0){
+					account = 1.0;
+				}else{
+					account = 0.0;
+				}
+				Rs1.r = ks.r * Is1_pp0.r * shine * account;
+				Rs1.b = ks.b * Is1_pp0.b * shine * account;
+				Rs1.g = ks.g * Is1_pp0.g * shine * account;
+				//Spectacualr reflection - Directional Light
+				vec3 r2 = 2.0 * costheta2 * nvtransformed - i;
+				float cosphi2 = dot(r2, view);
+				float shine2 = pow(max(cosphi2, 0.0), alpha);
+				float account2;
+				if(costheta2 > 1.0){
+					account2 = 1.0;
+				}else{
+					account2 = 0.0;
+				}
+				Rs2.r = ks.r * Is2_i.r * shine2 * account2;
+				Rs2.b = ks.b * Is2_i.b * shine2 * account2;
+				Rs2.g = ks.g * Is2_i.g * shine2 * account2;
+
+				if (light1SwitchShader > 0.5) {
+					R1 = Ra1 + Rd1 + Rs1;
+				} else {
+					R1 = vec3( 0.0, 0.0, 0.0 );
+				}
+
+				if (light2SwitchShader > 0.5) {
+					R2 = Ra2 + Rd2 + Rs2;
+				} else {
+					R2 = vec3( 0.0, 0.0, 0.0 );
+				}
+
+				//Get total reflection
+				R = clamp( R1+R2, 0.0, 1.0);
+				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
+				
+				
+				gl_PointSize = 1.0;
+				gl_Position = Ps * Pt * Pz * Py * Px * P_persp * vertexPositionTransformed;	
+	        }
+        </script>
+       
+        <script type="x-shader/x-fragment" id="PB_fragment-shader">
+            precision mediump float;
+			varying vec2 fTextureCoordinate;
+			uniform sampler2D texMap0;
+			varying vec3 R;
+			void main() {
+				vec4 color0 = texture2D(texMap0, fTextureCoordinate);
+				gl_FragColor = vec4(R.r+color0.r, R.g+color0.g, R.b+color0.b, 1.0);
+            }
+        </script>
+		
+		<script type="x-shader/x-vertex" id="Swing_vertex-shader">
+          precision mediump float;
+			attribute vec4 vertexPosition;
+			attribute vec3 nv;
+			
+			uniform mat4 M, M_inversetranspose, P_persp;
+			uniform float light1SwitchShader;
+			uniform float light2SwitchShader;
+			//uniforms for ambient, diffuse, and specular
+			uniform vec3 ka,kd,ks;
+			//uniform for shininess
+			uniform float alpha;
+			//uniform for position for light sources
+			uniform vec3 p0; // point light source
+			uniform vec3 iDir;
+			//uniforms for ambient, diffuse, and specular components for point light source
+			uniform vec3 Ia1, Id1, Is1;
+			uniform vec3 Ia2, Id2, Is2;
+			//varing vector for final color
+			varying vec3 R, R1, R2;
+			
+			uniform mat4 Sws;
+			uniform mat4 Swx;
+			uniform mat4 Swy;
+			uniform mat4 Swz;
+			uniform mat4 Swt;
+
+			void main() {
+				gl_PointSize = 1.0;
+				
+				//transform vertices by the modelview matrix
+				vec4 vertexPositionTransformed = M * vertexPosition;
+				
+				vec4 nv4 = vec4(nv.x, nv.y, nv.z, 1.0);
+				vec4 nv4transformed = M_inversetranspose * nv4;
+				vec3 nvtransformed = normalize(nv4transformed.xyz);
+				
+				//get reflection for light source
+				float distance = length(p0 - vertexPositionTransformed.xyz);
+				float a = .00005;
+				float b = .0;
+				float c = .0;
+				
+				float scalefactor = a * distance * distance + b * distance + c;
+				vec3 Ia1_pp0 = Ia1 / scalefactor;
+				vec3 Id1_pp0 = Id1 / scalefactor;
+				vec3 Is1_pp0 = Is1 / scalefactor;
+				
+				vec3 Ia2_i = Ia2;
+				vec3 Id2_i = Id2;
+				vec3 Is2_i = Is2;
+				
+				//Initialize reflections
+				vec3 Ra1, Rd1, Rs1;
+				vec3 Ra2, Rd2, Rs2;
+				
+				//ambient reflection
+				Ra1.r = ka.r * Ia1_pp0.r;
+				Ra1.g = ka.g * Ia1_pp0.g;
+				Ra1.b = ka.b * Ia1_pp0.b;
+				
+				Ra2.r = ka.r * Ia2_i.r;
+				Ra2.g = ka.g * Ia2_i.g;
+				Ra2.b = ka.b * Ia2_i.b;
+				
+				//diffuse reflection
+				vec3 i = normalize(p0 - vertexPositionTransformed.xyz);
+				float costheta = dot(i, nvtransformed);
+				Rd1.r = kd.r * Id1_pp0.r * max(costheta, 0.0);
+				Rd1.g = kd.r * Id1_pp0.g * max(costheta, 0.0);
+				Rd1.b = kd.r * Id1_pp0.b * max(costheta, 0.0);
+				
+				float costheta2 = dot(iDir, nvtransformed);
+				Rd2.r = kd.r * Id2_i.r * max(costheta2, 0.0);
+				Rd2.g = kd.r * Id2_i.g * max(costheta2, 0.0);
+				Rd2.b = kd.r * Id2_i.b * max(costheta2, 0.0);
+				
+				//spectacualr reflection - Point Light
+				vec3 r = 2.0 * costheta * nvtransformed - i;
+				vec3 view = normalize(vec3(.0,.0,.0)-vertexPositionTransformed.xyz);
+				float cosphi = dot(r, view);
+				float shine = pow(max(cosphi, 0.0), alpha);
+				float account;
+				if(costheta > 1.0){
+					account = 1.0;
+				}else{
+					account = 0.0;
+				}
+				Rs1.r = ks.r * Is1_pp0.r * shine * account;
+				Rs1.b = ks.b * Is1_pp0.b * shine * account;
+				Rs1.g = ks.g * Is1_pp0.g * shine * account;
+				//Spectacualr reflection - Directional Light
+				vec3 r2 = 2.0 * costheta2 * nvtransformed - i;
+				float cosphi2 = dot(r2, view);
+				float shine2 = pow(max(cosphi2, 0.0), alpha);
+				float account2;
+				if(costheta2 > 1.0){
+					account2 = 1.0;
+				}else{
+					account2 = 0.0;
+				}
+				Rs2.r = ks.r * Is2_i.r * shine2 * account2;
+				Rs2.b = ks.b * Is2_i.b * shine2 * account2;
+				Rs2.g = ks.g * Is2_i.g * shine2 * account2;
+
+				if (light1SwitchShader > 0.5) {
+					R1 = Ra1 + Rd1 + Rs1;
+				} else {
+					R1 = vec3( 0.0, 0.0, 0.0 );
+				}
+
+				if (light2SwitchShader > 0.5) {
+					R2 = Ra2 + Rd2 + Rs2;
+				} else {
+					R2 = vec3( 0.0, 0.0, 0.0 );
+				}
+
+				//Get total reflection
+				R = clamp( R1+R2, 0.0, 1.0);
+				//R = clamp( Ra1 + Rd1 + Rs1 + Ra2 + Rd2 + Rs2, 0.0, 1.0);
+				
+				
+				gl_PointSize = 1.0;
+				gl_Position = Sws * Swt * Swz * Swy * Swx * P_persp * vertexPositionTransformed;	
+	        }
+        </script>
+       
+        <script type="x-shader/x-fragment" id="Swing_fragment-shader">
+             precision mediump float;
+			varying vec3 R;
+			void main() {
+				gl_FragColor = vec4(R.r, R.g, R.b, 1.0);
+            }
+        </script>
+		
 	</head>
 		
 	<body onload="initGL()" onkeydown = "keys(event)" >
@@ -169,5 +444,6 @@
 		<button id="Specular Reflection" onclick="switchSpecular()">
 			Specular Reflection
 		</button>
+		<img id="wood" hidden src="wood.jpg" />
 	</body>
 </html>
