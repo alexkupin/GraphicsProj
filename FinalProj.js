@@ -1,12 +1,15 @@
 var gl;
-var program_MGR, program_PB, program_Swing;
+var program_MGR, program_PB, program_Swing, program_TC;
 var numVertices_MGR, numTriangles_MGR, vertices_MGR, indexList_MGR;
 var numVertices_PB, numTriangles_PB, vertices_PB, indexList_PB;
+var numVertices_TC, numTriangles_TC, vertices_TC, indexList_TC;
 var numVertices_Swing, numTriangles_Swing, vertices_Swing, indexList_Swing;
 var indexBuffer_MGR, verticesBuffer_MGR, vertexPointer_MGR, faceNormals_MGR, vertexNormals_MGR, normalsBuffer_MGR, vertexNormalPointer_MGR;
 var indexBuffer_PB, verticesBuffer_PB, vertexPointer_PB, faceNormals_PB, vertexNormals_PB, normalsBuffer_PB, vertexNormalPointer_PB;
+var indexBuffer_TC, verticesBuffer_TC, vertexPointer_TC, faceNormals_TC, vertexNormals_TC, normalsBuffer_TC, vertexNormalPointer_TC;
 var indexBuffer_Swing, verticesBuffer_Swing, vertexPointer_Swing, faceNormals_Swing, vertexNormals_Swing, normalsBuffer_Swing, vertexNormalPointer_Swing;
 var textureVertexbuffer_PB, textureCoordinate_PB;
+var textureVertexbuffer_TC, textureCoordinate_TC;
 var textureVertexbuffer_MGR, textureCoordinate_MGR;
 var textureVertexbuffer_Swing, textureCoordinate_Swing;
 var alphaloc;
@@ -16,14 +19,18 @@ var iDirloc;
 var light1Switch, light2Switch, specularSwitch;
 var light1SwitchLocation, light2SwitchLocation;
 var Px, Py, Pz, Pt, Ps, Pf, Po;
+var TCx, TCy, TCz, TCt, TCs, TCf, TCo;
 var Swx, Swy, Swz, Swt, Sws, Swf, Swo;
 var Mx, My, Mz, Mt, Ms, Mf, Mo;
 var tx, ty, tz, sx, sy;
 var Ptx, Pty, Ptz, Psx, Psy;
+var TCtx, TCty, TCtz, TCsx, TCsy;
 var Swtx, Swty, Swtz, Swsx, Swsy;
 var alpha, beta, gamma;
 var Palpha, Pbeta, Pgamma;
+var TCalpha, TCbeta, TCgamma;
 var Swalpha, Swbeta, Swgamma;
+var TCxUniform, TCyUniform, TCzUniform, TCtUniform, TCsUniform, TCtUniform, TCUniform;
 var SwxUniform, SwyUniform, SwzUniform, SwtUniform, SwsUniform, SwtUniform, SwoUniform;
 var PxUniform, PyUniform, PzUniform, PtUniform, PsUniform, PtUniform, PoUniform;
 var MxUniform, MyUniform, MzUniform, MtUniform, MsUniform, MtUniform, MoUniform;
@@ -43,10 +50,10 @@ function initGL(){
 
 	gl.enable(gl.DEPTH_TEST);
 	gl.viewport( 0, 0, 512, 512 );
-	gl.clearColor( 1.0, 1.0, 1.0, 1.0);	
+	gl.clearColor( 0.0, 0.0, 0.0, 1.0);	
 	
 	//modelview matrix
-	var e = vec3(10.0, 10.0, 10.0); //eye
+	var e = vec3(10.0, 5.0, 10.0); //eye
 	var a = vec3(0.0, 0.0, 0.0); // at point
 	var vup = vec3(0.0, 1.0, 0.0); //up vector
 	var n = normalize( vec3(e[0]-a[0], e[1]-a[1], e[2]-a[2]));
@@ -65,11 +72,13 @@ function initGL(){
 
 	initMGR();
 	initPB();
+	initTC();
 	initSwing();
-	light();
 	
 	light1Switch = 0;
 	light2Switch = 0;
+	switchLight1();
+	switchLight2();
 
 	//render the object
 	render();
@@ -109,9 +118,6 @@ function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTria
 		//itr through triangles
 		for(var i = 0; i < numTriangles; i++){
 			if(indexList[3*i] == j | indexList[3*i+1] == j | indexList[3*i+2] == j){
-				//if the j-th vertex is present in the i-th triangle
-				//and the i-th triangles face normal to vertexNormals
-			//console.log(faceNormals[i][0]);
 				vertexNormal[0] = vertexNormal[0] + faceNormals[i][0];
 				vertexNormal[1] = vertexNormal[1] + faceNormals[i][1];
 				vertexNormal[2] = vertexNormal[2] + faceNormals[i][2];			
@@ -125,29 +131,82 @@ function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTria
 };
 
 function switchLight1(){
-	if(light1Switch == 1){
-		light1Switch = 0;
-		light1SwitchLocation = gl.getUniformLocation(program_MGR, "light1SwitchShader");
-		gl.uniform1f(light1SwitchLocation, light1Switch);
-	}else{
-		light1Switch = 1;
-		light1SwitchLocation = gl.getUniformLocation(program_MGR, "light1SwitchShader");
-		gl.uniform1f(light1SwitchLocation, light1Switch);
-	}
-	console.log("Light1 switch = " + light1Switch)
+if(light1Switch == 1){
+light1Switch = 0;
+light1SwitchLocation = gl.getUniformLocation(program_MGR, "light1SwitchShader");
+gl.useProgram(program_MGR);
+gl.uniform1f(light1SwitchLocation, light1Switch);
+
+var light1SwitchLocation2 = gl.getUniformLocation(program_PB, "light1SwitchShader");
+gl.useProgram(program_PB);
+gl.uniform1f(light1SwitchLocation2, light1Switch);
+
+var light1SwitchLocation3 = gl.getUniformLocation(program_TC, "light1SwitchShader");
+gl.useProgram(program_TC);
+gl.uniform1f(light1SwitchLocation3, light1Switch);
+
+var light1SwitchLocation4 = gl.getUniformLocation(program_Swing, "light1SwitchShader");
+gl.useProgram(program_Swing);
+gl.uniform1f(light1SwitchLocation4, light1Switch);
+}else{
+light1Switch = 1;
+var light1SwitchLocation = gl.getUniformLocation(program_MGR, "light1SwitchShader");
+gl.useProgram(program_MGR);
+gl.uniform1f(light1SwitchLocation, light1Switch);
+
+var light1SwitchLocation2 = gl.getUniformLocation(program_PB, "light1SwitchShader");
+gl.useProgram(program_PB);
+gl.uniform1f(light1SwitchLocation2, light1Switch);
+
+var light1SwitchLocation3 = gl.getUniformLocation(program_TC, "light1SwitchShader");
+gl.useProgram(program_TC);
+gl.uniform1f(light1SwitchLocation3, light1Switch);
+
+var light1SwitchLocation4 = gl.getUniformLocation(program_Swing, "light1SwitchShader");
+gl.useProgram(program_Swing);
+gl.uniform1f(light1SwitchLocation4, light1Switch);
+}
+console.log("Light1 switch = " + light1Switch)
 }
 
 function switchLight2(){
-	if(light2Switch == 1){
-		light2Switch = 0;
-		light2SwitchLocation = gl.getUniformLocation(program_MGR, "light2SwitchShader");
-		gl.uniform1f(light2SwitchLocation, light2Switch);
-	}else{
-		light2Switch = 1;
-		light2SwitchLocation = gl.getUniformLocation(program_MGR, "light2SwitchShader");
-		gl.uniform1f(light2SwitchLocation, light2Switch);
-	}
-	console.log("Light2 switch = " + light2Switch)
+if(light2Switch == 1){
+light2Switch = 0;
+var light2SwitchLocation = gl.getUniformLocation(program_MGR, "light2SwitchShader");
+gl.useProgram(program_MGR);
+gl.uniform1f(light2SwitchLocation, light2Switch);
+
+var light2SwitchLocation2 = gl.getUniformLocation(program_PB, "light2SwitchShader");
+gl.useProgram(program_PB);
+gl.uniform1f(light2SwitchLocation2, light2Switch);
+
+var light2SwitchLocation3 = gl.getUniformLocation(program_TC, "light2SwitchShader");
+gl.useProgram(program_TC);
+gl.uniform1f(light2SwitchLocation3, light2Switch);
+
+var light2SwitchLocation4 = gl.getUniformLocation(program_Swing, "light2SwitchShader");
+gl.useProgram(program_Swing);
+gl.uniform1f(light2SwitchLocation4, light2Switch);
+}else{
+light2Switch = 1;
+
+var light2SwitchLocation = gl.getUniformLocation(program_MGR, "light2SwitchShader");
+gl.useProgram(program_MGR);
+gl.uniform1f(light2SwitchLocation, light2Switch);
+
+var light2SwitchLocation2 = gl.getUniformLocation(program_PB, "light2SwitchShader");
+gl.useProgram(program_PB);
+gl.uniform1f(light2SwitchLocation2, light2Switch);
+
+var light2SwitchLocation3 = gl.getUniformLocation(program_TC, "light2SwitchShader");
+gl.useProgram(program_TC);
+gl.uniform1f(light2SwitchLocation3, light2Switch);
+
+var light2SwitchLocation4 = gl.getUniformLocation(program_Swing, "light2SwitchShader");
+gl.useProgram(program_Swing);
+gl.uniform1f(light2SwitchLocation4, light2Switch);
+}
+console.log("Light2 switch = " + light2Switch)
 }
 
 function switchSpecular(){
@@ -155,7 +214,7 @@ function switchSpecular(){
 		gl.uniform3f(ksloc, 0.0, 0.0, 0.0);
 		specularSwitch = 0;
 	}else{
-		gl.uniform3f(ksloc, 1.0, 1.0, 1.0);
+		gl.uniform3f(ksloc, 0.5, 0.5, 0.5);
 		specularSwitch = 1;
 	}
 	console.log("Specular switch = " + specularSwitch)
@@ -166,26 +225,7 @@ function keys(event){
 	
 		var theKeyCode = event.keyCode;
 		
-		if( theKeyCode == 88 ){ //x
-			alpha = alpha + .1;
-			Mx = [1.0,
-				  0.0,
-				  0.0,
-				  0.0,
-				  0.0,
-				  Math.cos(alpha),
-				 -Math.sin(alpha),
-				  0.0,
-				  0.0,
-				  Math.sin(alpha),
-				  Math.cos(alpha),
-				  0.0,
-				  0.0,
-				  0.0,
-				  0.0,
-				  1.0];
-			gl.uniformMatrix4fv(MxUniform, false, flatten(Mx));
-		}else if(theKeyCode == 89 ){ //y
+		 if(theKeyCode == 65 ){ //A
 			beta = beta + .1;
 			My = [Math.cos(beta),
 				  0.0,
@@ -203,38 +243,26 @@ function keys(event){
 				  0.0,
 				  0.0,
 				  1.0];
-			gl.uniformMatrix4fv(MyUniform, false, flatten(My));
-		}else if( theKeyCode == 90 ){ //z
-			gamma = gamma +.1;
-			Mz = [Math.cos(gamma),
-				  -Math.sin(gamma),
+		 gl.uniformMatrix4fv(MyUniform, false, flatten(My));}
+		 else if(theKeyCode == 68){ //D
+			beta = beta - .1;
+			My = [Math.cos(beta),
 				  0.0,
-				  0.0,
-				  Math.sin(gamma),
-				  Math.cos(gamma),
-				  0.0,
-				  0.0,
+				 -Math.sin(beta),
 				  0.0,
 				  0.0,
 				  1.0,
 				  0.0,
 				  0.0,
+				  Math.sin(beta),
+				  0.0,
+				  Math.cos(beta),
+				  0.0,
+				  0.0,
 				  0.0,
 				  0.0,
 				  1.0];
-			gl.uniformMatrix4fv(MzUniform, false, flatten(Mz));
-		}
-		
-		
-		if( theKeyCode == 74 ){ //J
-			sx = sx - .01;
-		}else if(theKeyCode == 76 ){ //L
-			sx = sx + .01;
-		}else if( theKeyCode == 73 ){ //I
-			sy = sy + .01;
-		}else if( theKeyCode == 75 ){ //K
-			sy = sy - .01;
-		}
+		 gl.uniformMatrix4fv(MyUniform, false, flatten(My));}
 		
 		Ms = [sx,
 			  0.0,
@@ -246,7 +274,7 @@ function keys(event){
 			  0.0,
 			  0.0,
 			  0.0,
-			  1.0,
+			  sz,
 			  0.0,
 			  0.0,
 			  0.0,
@@ -255,20 +283,7 @@ function keys(event){
 	    
 		gl.uniformMatrix4fv(MsUniform, false, flatten(Ms));
 		
-		if( theKeyCode == 65 ){ //A
-			tx = tx - .01;
-		}else if(theKeyCode == 68 ){ //D
-			tx = tx + .01;
-		}else if( theKeyCode == 83 ){ //S
-			ty = ty - .01;
-		}else if( theKeyCode == 87 ){ //W
-			ty = ty + .01;
-		}else if( theKeyCode == 81 ){ //Q
-			tz = tz + .01;
-		}else if( theKeyCode == 69 ){ //E
-			tz = tz - .01;
-		}
-		Mt = [1.0, 
+			Mt = [1.0, 
 			  0.0, 
 			  0.0, 
 			  0.0,
@@ -285,13 +300,42 @@ function keys(event){
 			  tz,
 			  1.0];
 		gl.uniformMatrix4fv(MtUniform, false, flatten(Mt));
-		
-	if( theKeyCode == 80 ){ //P
-		console.log("sx sy: " + sx + " " + sy + " //tx ty: " + tx + " " + ty + " //Alpha Gamma Beta: " + alpha + gamma + beta);
-	}
+	
 }
 
-function light(){
+function initMGR(){
+	numVertices_MGR = 436;
+	numTriangles_MGR = 819;
+	vertices_MGR = getMGRVertices();
+	indexList_MGR = getMGRFaces();
+	textureCoordinates_MGR = getMGRTextureCoord();
+
+	 leftMG = -5.0;
+	 rightMG = 5.0;
+	 topMG = 5.0;
+	 bottomMG = -5.0;
+	 nearMG = 10;
+	 farMG = 30.0;
+	
+	sx = sy = sz = 2;
+	tx = 1;
+	ty = 0;
+	tz = 1;
+	alpha = beta = gamma = 0;
+    Mx = My = Mz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1];
+	Ms = [sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, sz, 0, 0, 0, 0, 1];
+	
+	//perspective projection matrix
+	perspectiveProjectionMatrix1 = 
+		[2.0*nearMG/(rightMG-leftMG), .0, .0, .0,
+		 .0, 2.0*nearMG/(topMG-bottomMG), .0, .0,
+		 (rightMG+leftMG)/(rightMG-leftMG), (topMG+bottomMG)/(topMG-bottomMG), -(farMG+nearMG)/(farMG-nearMG), -1.0,
+		 .0, .0, -(2.0*farMG*nearMG)/(farMG-nearMG), .0];
+	
+	program_MGR = initShaders( gl, "MGR_vertex-shader", "MGR_fragment-shader" );
+	gl.useProgram(program_MGR );
+	
 	gl.useProgram(program_MGR );
 
 	//coefficients for object
@@ -322,48 +366,9 @@ function light(){
 	var Ia2loc = gl.getUniformLocation(program_MGR, "Ia2");
 	var Id2loc = gl.getUniformLocation(program_MGR, "Id2");
 	var Is2loc = gl.getUniformLocation(program_MGR, "Is2");
-	gl.uniform3f(Ia2loc, 0.1, 0.1, 0.5);
+	gl.uniform3f(Ia2loc, 1.0, 1.0, 1.0);
 	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
 	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
-}
-
-function initMGR(){
-	numVertices_MGR = 436;
-	numTriangles_MGR = 819;
-	vertices_MGR = getMGRVertices();
-	indexList_MGR = getMGRFaces();
-	textureCoordinates_MGR = getMGRTextureCoord();
-
-	
-	 leftMG = -5.0;
-	 rightMG = 5.0;
-	 topMG = 5.0;
-	 bottomMG = -5.0;
-	 nearMG = 10;
-	 farMG = 20.0;
-	
-	sx = sy = 3;
-	tx = 0.1;
-	ty = .055;
-	tz = .1;
-	alpha = beta = gamma = 0;
-    Mx = My = Mz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-	Mt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1];
-	Ms = [sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-
-
-	
-	//projection matrix
-	
-	//perspective projection matrix
-	perspectiveProjectionMatrix1 = 
-		[2.0*nearMG/(rightMG-leftMG), .0, .0, .0,
-		 .0, 2.0*nearMG/(topMG-bottomMG), .0, .0,
-		 (rightMG+leftMG)/(rightMG-leftMG), (topMG+bottomMG)/(topMG-bottomMG), -(farMG+nearMG)/(farMG-nearMG), -1.0,
-		 .0, .0, -(2.0*farMG*nearMG)/(farMG-nearMG), .0];
-	
-	program_MGR = initShaders( gl, "MGR_vertex-shader", "MGR_fragment-shader" );
-	gl.useProgram(program_MGR );
 	
 	indexBuffer_MGR = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_MGR);
@@ -437,14 +442,14 @@ function initPB(){
 	var top_ = 5.0;
 	var bottom = -5.0;
 	var near = 10;
-	var far = 20.0;
+	var far = 40.0;
 	
 	Psx = Psy = 1;
-	Ptx =.5;
-	Pty =.2;
-	Ptz =-.5;
+	Ptx =1;
+	Pty =0;
+	Ptz =-6;
 	Palpha = 0;
-	Pbeta =  0;
+	Pbeta =  80;
 	Pgamma = 0;
 	Ps = Py = Pz = Pt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	Pt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Ptx, Pty, Ptz, 1];
@@ -537,7 +542,7 @@ function initPB(){
 	var Ia2loc = gl.getUniformLocation(program_PB, "Ia2");
 	var Id2loc = gl.getUniformLocation(program_PB, "Id2");
 	var Is2loc = gl.getUniformLocation(program_PB, "Is2");
-	gl.uniform3f(Ia2loc, 0.1, 0.1, 0.5);
+	gl.uniform3f(Ia2loc, 1.0, 1.0, 1.0);
 	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
 	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
 	
@@ -573,6 +578,155 @@ function initPB(){
 	
 }
 
+function initTC(){
+	numVertices_TC = 356;
+	numTriangles_TC = 743;
+	vertices_TC = getTCVertices();
+	indexList_TC = getTCFaces();
+	textureCoordinates_TC = getTCTextureCoord();
+	
+	//projection matrix
+	var left = -5.0;
+	var right = 5.0;
+	var top_ = 5.0;
+	var bottom = -5.0;
+	var near = 10;
+	var far = 30.0;
+	
+	TCsx = TCsy = 1;
+	TCtx =-2;
+	TCty =0;
+	TCtz =-5.6;
+	TCalpha = 0;
+	TCbeta =  0;
+	TCgamma = 0;
+	TCs = TCy = TCz = TCt = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+	TCt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, TCtx, TCty, TCtz, 1];
+	TCx = [		  1.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  Math.cos(TCalpha),
+				 -Math.sin(TCalpha),
+				  0.0,
+				  0.0,
+				  Math.sin(TCalpha),
+				  Math.cos(TCalpha),
+				  0.0,
+				  0.0,
+				  0.0,
+				  0.0,
+				  1.0];
+	//perspective projection matrix
+	perspectiveProjectionMatrix2 = 
+		[2.0*near/(right-left), .0, .0, .0,
+		 .0, 2.0*near/(top_-bottom), .0, .0,
+		 (right+left)/(right-left), (top_+bottom)/(top_-bottom), -(far+near)/(far-near), -1.0,
+		 .0, .0, -(2.0*far*near)/(far-near), .0];	
+	
+	program_TC = initShaders( gl, "TC_vertex-shader", "TC_fragment-shader" );
+	gl.useProgram(program_TC);
+	
+	perspectiveProjectionMatrixLocation2 = gl.getUniformLocation(program_TC, "P_persp");
+	gl.uniformMatrix4fv(perspectiveProjectionMatrixLocation2, false, perspectiveProjectionMatrix2);
+	
+	indexBuffer_TC = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_TC);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexList_TC), gl.STATIC_DRAW);
+	
+	verticesBuffer_TC = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer_TC);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices_TC), gl.STATIC_DRAW);
+	
+	vertexPointer_TC = gl.getAttribLocation(program_TC, "vertexPosition");
+	gl.vertexAttribPointer( vertexPointer_TC, 4, gl.FLOAT, false, 0, 0 );
+	gl.enableVertexAttribArray(vertexPointer_TC);
+		
+	faceNormals_TC = getFaceNormals( vertices_TC, indexList_TC, numTriangles_TC);
+	vertexNormals_TC = getVertexNormals( vertices_TC, indexList_TC, faceNormals_TC, numVertices_TC, numTriangles_TC);
+	
+	normalsBuffer_TC = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_TC);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexNormals_TC), gl.STATIC_DRAW);
+	
+	textureVertexbuffer_TC = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, textureVertexbuffer_TC);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates_TC), gl.STATIC_DRAW);
+	
+	textureCoordinate_TC = gl.getAttribLocation(program_TC, "textureCoordinate");
+	gl.vertexAttribPointer(textureCoordinate_TC, 2, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(textureCoordinate_TC);
+	
+	modelviewMatrixLocation2 = gl.getUniformLocation(program_TC, "M");
+	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
+	
+	gl.useProgram(program_TC);
+
+	//coefficients for object
+	var kaloc = gl.getUniformLocation(program_TC, "ka");
+	var kdloc = gl.getUniformLocation(program_TC, "kd");
+	ksloc = gl.getUniformLocation(program_TC, "ks");
+	gl.uniform3f(kaloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(kdloc, 0.5, 0.5, 0.5);
+	gl.uniform3f(ksloc, 1.0, 1.0, 1.0);
+	alphaloc = gl.getUniformLocation(program_TC, "alpha");
+	gl.uniform1f(alphaloc, 4.0);
+	specularSwitch = 1;
+	
+	p0loc = gl.getUniformLocation(program_TC, "p0");
+	gl.uniform3f(p0loc, 0.0, 0.0, 45.0);
+	
+	//values for light components
+	var Ia1loc = gl.getUniformLocation(program_TC, "Ia1");
+	var Id1loc = gl.getUniformLocation(program_TC, "Id1");
+	var Is1loc = gl.getUniformLocation(program_TC, "Is1");
+	gl.uniform3f(Ia1loc, 0.1, 0.1, 0.1);
+	gl.uniform3f(Id1loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is1loc, 0.8, 0.8, 0.8);
+	
+	iDirloc = gl.getUniformLocation(program_TC, "iDir");
+	gl.uniform3f(iDirloc, 0.5, 0.7, 1);
+	
+	var Ia2loc = gl.getUniformLocation(program_TC, "Ia2");
+	var Id2loc = gl.getUniformLocation(program_TC, "Id2");
+	var Is2loc = gl.getUniformLocation(program_TC, "Is2");
+	gl.uniform3f(Ia2loc, 1.0, 1.0, 1.0);
+	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
+	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
+	
+	modelviewMatrixLocation2 = gl.getUniformLocation(program_TC, "M");
+	modelviewMatrixInverseTransposeLocation2 = gl.getUniformLocation(program_TC, "M_inversetranspose");
+	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
+	gl.uniformMatrix4fv(modelviewMatrixInverseTransposeLocation2, false, modelviewMatrixInverseTranspose);
+	
+	vertexNormalPointer_TC = gl.getAttribLocation(program_TC, "nv");
+	gl.vertexAttribPointer( vertexNormalPointer_TC, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray( vertexNormalPointer_TC );
+	
+	TCsUniform = gl.getUniformLocation(program_TC, "TCs" );
+	TCxUniform = gl.getUniformLocation(program_TC, "TCx" );
+	TCyUniform = gl.getUniformLocation(program_TC, "TCy" );
+	TCzUniform = gl.getUniformLocation(program_TC, "TCz" );
+	TCtUniform = gl.getUniformLocation(program_TC, "TCt" );
+	gl.uniformMatrix4fv( TCsUniform, false, flatten(TCs) );
+	gl.uniformMatrix4fv( TCxUniform, false, flatten(TCx) );
+	gl.uniformMatrix4fv( TCyUniform, false, flatten(TCy) );
+	gl.uniformMatrix4fv( TCzUniform, false, flatten(TCz) );
+	gl.uniformMatrix4fv( TCtUniform, false, flatten(TCt) );
+	
+	myImageMetal = document.getElementById("metal");
+	textureImageMetal = gl.createTexture();
+	
+	gl.bindTexture(gl.TEXTURE_2D, textureImageMetal);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, myImageMetal);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	gl.generateMipmap(gl.TEXTURE_2D);
+	
+}
+
 function initSwing(){
 	numVertices_Swing = 996;
 	numTriangles_Swing = 1894;
@@ -590,9 +744,9 @@ function initSwing(){
 	
 	
 	Swsx = Swsy = 1;
-	Swtx=-.5;
-	Swty=0;
-	Swtz=0;
+	Swtx=-7;
+	Swty=-1;
+	Swtz=1.5;
 	Swalpha = Swbeta = Swgamma = 0;
 	Sws = Swx = Swy = Swz = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 	Swt=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, Swtx, Swty, Swtz, 1];
@@ -633,9 +787,9 @@ function initSwing(){
 	gl.bindBuffer(gl.ARRAY_BUFFER, textureVertexbuffer_Swing);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(textureCoordinates_Swing), gl.STATIC_DRAW);
 	
-	textureCoordinate_PB = gl.getAttribLocation(program_PB, "textureCoordinate");
-	gl.vertexAttribPointer(textureCoordinate_PB, 2, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(textureCoordinate_PB);
+	textureCoordinate_Swing = gl.getAttribLocation(program_Swing, "textureCoordinate");
+	gl.vertexAttribPointer(textureCoordinate_Swing, 2, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(textureCoordinate_Swing);
 	
 	modelviewMatrixLocation2 = gl.getUniformLocation(program_Swing, "M");
 	gl.uniformMatrix4fv(modelviewMatrixLocation2, false, modelviewMatrix);
@@ -670,7 +824,7 @@ function initSwing(){
 	var Ia2loc = gl.getUniformLocation(program_Swing, "Ia2");
 	var Id2loc = gl.getUniformLocation(program_Swing, "Id2");
 	var Is2loc = gl.getUniformLocation(program_Swing, "Is2");
-	gl.uniform3f(Ia2loc, 0.1, 0.1, 0.5);
+	gl.uniform3f(Ia2loc, 1.0, 1.0, 1.0);
 	gl.uniform3f(Id2loc, 0.8, 0.8, 0.5);
 	gl.uniform3f(Is2loc, 0.8, 0.8, 0.8);
 	
@@ -762,6 +916,32 @@ function drawPB(){
 	
 }
 
+function drawTC(){
+	//console.log("Here");
+	gl.useProgram(program_TC);
+	
+	//bind buffers and set up pointer
+	gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer_TC);
+	gl.enableVertexAttribArray(vertexPointer_TC);
+	gl.vertexAttribPointer( vertexPointer_TC, 4, gl.FLOAT, false, 0, 0 );
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_TC);
+	gl.enableVertexAttribArray( vertexNormalPointer_TC );
+	gl.vertexAttribPointer( vertexNormalPointer_TC, 3, gl.FLOAT, false, 0, 0);
+	
+	//var temp = 0
+	//while(temp == 0)
+	//	console.log("here");
+	
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,  textureImage);
+	gl.uniform1i(gl.getUniformLocation(program_TC, "texMap0"), 0);
+	
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_TC);
+	gl.drawElements(gl.TRIANGLES, 3*numTriangles_TC, gl.UNSIGNED_SHORT, 0);
+	
+}
+
 function drawSwing(){
 	//console.log("Here");
 	gl.useProgram(program_Swing);
@@ -789,6 +969,7 @@ function render(){
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	drawMGR();
 	drawPB();
+	drawTC();
 	drawSwing();
 	requestAnimFrame(render);
 }
