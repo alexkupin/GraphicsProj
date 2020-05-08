@@ -11,14 +11,14 @@ these steps for the merry-go round, the swing set, trash can, and park bench.
 
 INTERATION
 The mery go round object can be rotated around it's y-axis, creating a realistic representation of motions in a Park. To make
-this transformation occur, the user can pren the "A" key or the "D" Key.
+this transformation occur, the user can press the "A" key or the "D" Key.
 
 VIEWING AND LIGHTING
 The scene is viewed using perspective projection. There are currently two lights on the scene. There is a point light at position
-X,Y,Z and a directional light with the direction of X,Y,Z. Specular relfection is aplied to the point light. The affect of these 
+0,0,45 and a directional light with the direction of 0.5,0.7,1.0. Specular relfection is aplied to the point light. The affect of these 
 lights are multiplied with the texture colors in the fragment shader.
 
 TEXTURE
 We applied two Textures into the scene. We applied a wood texture to the park bench to make a wood bench and trash can, and also used a rough
 seamless metal texture for the merry go round and swing set, as that is likely the more used material for these 
-objects. Both of these texture were make using images edited so that they were power of 2 pixel images.
+objects. Both of these texture were made using images edited so that they were power of 2 pixel images.
