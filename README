@@ -9,7 +9,7 @@ them as .obj files including the vertices, faces, and texture coordinates. We th
 format needed in the .js files (i.e. extracted the points into a list or a list of vec4()'s) to be used as functions. We followed
 these steps for the merry-go round, the swing set, trash can, and park bench.
 
-INTERATION
+INTERACTION
 The mery go round object can be rotated around it's y-axis, creating a realistic representation of motions in a Park. To make
 this transformation occur, the user can press the "A" key or the "D" Key.
 
