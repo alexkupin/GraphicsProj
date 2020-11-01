@@ -5,7 +5,7 @@ This HTML file generates an interactive Park scence, including a swingset, a par
 
 OBJECTS
 Each object was created by Alex in AutoCad Maya. First We modeled the object to how we would like it to be shown, then We exported 
-them as .obj files including the vertices, faces, and texture coordinates. We then created an extraction tool to obtain the correct
+them as .obj files including the vertices, faces, and texture coordinates. We then created an extraction tool (OBJ_To_JS.CS) to obtain the correct
 format needed in the .js files (i.e. extracted the points into a list or a list of vec4()'s) to be used as functions. We followed
 these steps for the merry-go round, the swing set, trash can, and park bench.
 
